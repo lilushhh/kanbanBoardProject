@@ -12,7 +12,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tasks.forEach(task => renderTask(task.text, task.status));
 
-    updateTaskCounts();
+    const dropZones = document.querySelectorAll(".tasks");
+
+    dropZones.forEach(zone => {
+        zone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+        });
+
+        zone.addEventListener("drop", (e) => {
+            e.preventDefault();
+
+            const text = e.dataTransfer.getData("text/plain");
+            const oldStatus = e.dataTransfer.getData("status");
+            const newStatus = zone.parentElement.id;
+
+            const oldColumn = document.querySelector(`#${oldStatus} .tasks`);
+            const taskToMove = [...oldColumn.children].find(el => {
+                const span = el.querySelector("span");
+                return span && span.textContent === text;
+            });
+
+            if (taskToMove) {
+                zone.appendChild(taskToMove);
+            }
+
+            const projectName = localStorage.getItem("currentProject");
+            const projectKey = "tasks_" + projectName;
+            let tasks = JSON.parse(localStorage.getItem(projectKey) || "[]");
+
+            tasks = tasks.map(task =>
+                task.text === text ? {...task, status: newStatus } : task
+            );
+
+            localStorage.setItem(projectKey, JSON.stringify(tasks));
+            updateTaskCounts();
+        });
+    });
+
 });
 
 
@@ -44,6 +80,20 @@ function renderTask(text, status) {
         <span>${text}</span>
         <i class = "fas fa-trash delete-icon" onclick="deleteTask(this)"></i>
     `;
+
+    task.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", text);
+        const currentColumn = task.closest(".column").id;
+        e.dataTransfer.setData("status", currentColumn);
+        setTimeout(() => {
+            task.style.display = "none";
+        }, 0);
+    });
+
+    task.addEventListener("dragend", () => {
+        task.style.display = "flex";
+    });
+
 
     const column = document.querySelector(`#${status} .tasks`);
     column.appendChild(task);
