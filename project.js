@@ -35,9 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (taskToMove) {
                 zone.appendChild(taskToMove);
             }
-
-            const projectName = localStorage.getItem("currentProject");
-            const projectKey = "tasks_" + projectName;
             let tasks = JSON.parse(localStorage.getItem(projectKey) || "[]");
 
             tasks = tasks.map(task =>

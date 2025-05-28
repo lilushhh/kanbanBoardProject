@@ -59,6 +59,24 @@ button:hover {
     background-color: #0056b3;
 }
 
+.projects-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: calc(90vh - 50px - 40px - 40px - 40px);
+    width: fit-content;
+    margin: 0 auto;
+    overflow-y: auto;
+}
+
+.projects-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    max-width: calc(900px + 150px + 10px);
+}
+
 .projects-list button {
     display: inline-block;
     margin: 5px;

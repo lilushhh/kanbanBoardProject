@@ -7,7 +7,8 @@ function loadProjects() {
         const btn = document.createElement("button");
         btn.textContent = project;
         btn.onclick = () => {
-
+            localStorage.setItem("currentProject", project);
+            window.location.href = "project.html";
         };
         projectList.appendChild(btn);
     });
