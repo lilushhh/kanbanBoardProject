@@ -37,11 +37,25 @@ h1 {
     margin-bottom: 20px;
 }
 
+#nameInput{
+    width: 600px;
+    font-size: 20px;
+}
+
 input {
     width: 900px;
     padding: 10px;
     font-size: 22px;
     border-radius: 8px;
+}
+
+#nameInput{
+    margin-right: 7px;
+}
+
+#buttonName{
+    width: 150px;
+    height: 45px;
 }
 
 button {
@@ -107,7 +121,7 @@ button:hover {
     background-color: #e8e8e8;
     padding: 15px;
     border-radius: 8px;
-    min-height: 65vh;
+    min-height: 57vh;
     display: flex;
     flex-direction: column;
     overflow-y: auto;

@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tasks.forEach(task => renderTask(task.text, task.status, task.name));
 
+    document.addEventListener("DOMContentLoaded", filterByName());
+
     const dropZones = document.querySelectorAll(".tasks");
 
     dropZones.forEach(zone => {
@@ -52,6 +54,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+function filterByName(){
+    const select = document.getElementById("filterOptions");
+
+    const projectKey = "tasks_" + localStorage.getItem("currentProject");
+    let tasks = JSON.parse(localStorage.getItem(projectKey) || []);
+
+    let names = tasks.map(task => task.name);
+
+    let namesInSelect = Array.from(select.options).map(option => option.value);
+
+    names.forEach(name => {
+        if(!namesInSelect.includes(name) || namesInSelect == null){
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        }
+    });
+}
+
 let undefinedUsers = 0;
 
 function addName() {
@@ -89,6 +111,7 @@ function renderTask(text, status, name) {
     const task = document.createElement("div");
     task.classList.add("task");
     task.setAttribute("draggable", "true");
+    task.setAttribute("data-name", name);
 
     task.innerHTML = `
         <span>${text} - ${name}</span>
@@ -112,6 +135,8 @@ function renderTask(text, status, name) {
     const column = document.querySelector(`#${status} .tasks`);
     column.appendChild(task);
 
+    filterByName();
+
     updateTaskCounts();
 }
 
@@ -128,6 +153,8 @@ function updateTaskCounts() {
 function deleteTask(icon) {
     const task = icon.parentElement;
     const taskText = task.querySelector("span").textContent;
+    const name = task.getAttribute("data-name");
+    removeNameFromFilter(name);
 
     task.remove();
 
@@ -140,6 +167,16 @@ function deleteTask(icon) {
     localStorage.setItem(projectKey, JSON.stringify(tasks));
 
     updateTaskCounts();
+}
+
+function removeNameFromFilter(name){
+    const select = document.getElementById("filterOptions");
+    for(let i = 0; i < select.options.length; i++){
+        if(select.options[i].textContent == name){
+            select.remove(i);
+            break;
+        }
+    }
 }
 
 function goBack() {
