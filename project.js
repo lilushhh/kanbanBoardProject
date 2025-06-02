@@ -14,6 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("DOMContentLoaded", filterByName());
 
+    document.addEventListener("change", filterTaskByUser);
+
     const dropZones = document.querySelectorAll(".tasks");
 
     dropZones.forEach(zone => {
@@ -43,9 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
             let tasks = JSON.parse(localStorage.getItem(projectKey) || "[]");
 
             tasks = tasks.map(task =>
-                `${task.text} - ${task.name}` === `${text} - ${nameTask}`
-                    ? { ...task, status: newStatus }
-                    : task
+                `${task.text} - ${task.name}` === `${text} - ${nameTask}` ? {...task, status: newStatus } :
+                task
             );
 
             localStorage.setItem(projectKey, JSON.stringify(tasks));
@@ -54,8 +55,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-function filterByName(){
+function filterTaskByUser() {
+    const selectedUser = document.getElementById("filterOptions").value;
+
+    const projectName = localStorage.getItem("currentProject");
+    const projectKey = "tasks_" + projectName;
+    const tasks = JSON.parse(localStorage.getItem(projectKey) || []);
+
+    document.querySelectorAll(".tasks").forEach(zone => {
+        zone.innerHTML = "";
+    });
+
+    const filteredTasks = selectedUser === "All" ? tasks : tasks.filter(task => task.name === selectedUser);
+    filteredTasks.forEach(task => {
+        renderTask(task.text, task.status, task.name);
+    });
+
+    updateTaskCounts();
+}
+
+function filterByName() {
     const select = document.getElementById("filterOptions");
+
+    select.innerHTML = "";
+
+    const allOption = document.createElement("option");
+    allOption.value = "All";
+    allOption.textContent = "All";
+    select.appendChild(allOption);
 
     const projectKey = "tasks_" + localStorage.getItem("currentProject");
     let tasks = JSON.parse(localStorage.getItem(projectKey) || []);
@@ -65,7 +92,7 @@ function filterByName(){
     let namesInSelect = Array.from(select.options).map(option => option.value);
 
     names.forEach(name => {
-        if(!namesInSelect.includes(name) || namesInSelect == null){
+        if (!namesInSelect.includes(name) || namesInSelect == null) {
             const option = document.createElement("option");
             option.value = name;
             option.textContent = name;
@@ -104,6 +131,8 @@ function addTask() {
 
     renderTask(taskText, "todo", nameText);
 
+    filterByName();
+
     input.value = "";
 }
 
@@ -134,8 +163,6 @@ function renderTask(text, status, name) {
 
     const column = document.querySelector(`#${status} .tasks`);
     column.appendChild(task);
-
-    filterByName();
 
     updateTaskCounts();
 }
@@ -169,10 +196,10 @@ function deleteTask(icon) {
     updateTaskCounts();
 }
 
-function removeNameFromFilter(name){
+function removeNameFromFilter(name) {
     const select = document.getElementById("filterOptions");
-    for(let i = 0; i < select.options.length; i++){
-        if(select.options[i].textContent == name){
+    for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].textContent == name) {
             select.remove(i);
             break;
         }

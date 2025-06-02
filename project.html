@@ -16,13 +16,13 @@
             <div class="input-container">
                 <input type="text" id="taskInput" placeholder="Enter task title" />
                 <button onclick="addTask()">Add Task</button>
-             </div>
-            <div class = "name-input">
-                <input type="text" id="nameInput" placeholder="Enter the name user who created the task"/>
             </div>
-        </div>
-        <div class="filter">
-            <select id="filterOptions"><option disabled="false">users</option></select>
+            <div class="name-input">
+                <input type="text" id="nameInput" placeholder="Enter the name user who created the task" />
+
+                <label for="filterOptions" id="filterLabel">name filter - </label>
+                <select id="filterOptions"></select>
+            </div>
         </div>
         <div class="kanban-board">
             <div class="column" id="todo">

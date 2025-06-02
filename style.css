@@ -37,7 +37,7 @@ h1 {
     margin-bottom: 20px;
 }
 
-#nameInput{
+#nameInput {
     width: 600px;
     font-size: 20px;
 }
@@ -49,11 +49,11 @@ input {
     border-radius: 8px;
 }
 
-#nameInput{
+#nameInput {
     margin-right: 7px;
 }
 
-#buttonName{
+#buttonName {
     width: 150px;
     height: 45px;
 }
@@ -174,4 +174,20 @@ button:hover {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#filterOptions {
+    width: 200px;
+    height: 40px;
+    font-size: 20px;
+    border: 1px solid black;
+    border-radius: 8px;
+    padding: 5px 10px;
+    margin-left: 10px;
+}
+
+#filterLabel {
+    font-size: 20px;
+    margin-right: 5px;
+    align-self: center;
 }
