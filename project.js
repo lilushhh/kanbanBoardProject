@@ -209,31 +209,21 @@ function removeNameFromFilter(name) {
 }
 
 function getUserColor(name) {
-    let colorsMap;
+    let hash = 0;
 
-    try {
-        colorsMap = JSON.parse(localStorage.getItem("userColors")) || {};
-    } catch {
-        colorsMap = {};
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
 
-    if (!Object.prototype.hasOwnProperty.call(colorsMap, name)) {
-        const newColor = generateRandomColor();
-        colorsMap[name] = newColor;
-        localStorage.setItem("userColors", JSON.stringify(colorsMap));
+    let color = '#';
+    for (let i = 0; i < 3; i++) {
+        const value = (hash >> (i * 8)) & 0xFF;
+        color += value.toString(16).padStart(2, '0');
     }
 
-    return colorsMap[name];
-}
-
-function generateRandomColor() {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let index = 0; index < 6; index++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
     return color;
 }
+
 
 function goBack() {
     window.location.href = "index.html";
