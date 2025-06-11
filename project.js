@@ -8,13 +8,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const projectKey = "tasks_" + projectName;
-    const tasks = JSON.parse(localStorage.getItem(projectKey)) || [];
+    const tasks = JSON.parse(localStorage.getItem(projectKey) || "[]");
 
     tasks.forEach(task => renderTask(task.text, task.status, task.name));
+    filterByName();
 
-    document.addEventListener("DOMContentLoaded", filterByName());
-
-    document.addEventListener("change", filterTaskByUser);
+    document.getElementById("filterOptions").addEventListener("change", filterTaskByUser);
 
     const dropZones = document.querySelectorAll(".tasks");
 
@@ -85,9 +84,9 @@ function filterByName() {
     select.appendChild(allOption);
 
     const projectKey = "tasks_" + localStorage.getItem("currentProject");
-    let tasks = JSON.parse(localStorage.getItem(projectKey) || []);
+    let tasks = JSON.parse(localStorage.getItem(projectKey) || "[]");
 
-    let names = tasks.map(task => task.name);
+    let names = [...new Set(tasks.map(task => task.name))];
 
     let namesInSelect = Array.from(select.options).map(option => option.value);
 
@@ -126,6 +125,8 @@ function addTask() {
     let raw = localStorage.getItem(projectKey);
     let tasks = raw ? JSON.parse(raw) : [];
 
+    getUserColor(nameText);
+
     tasks.push({ text: taskText, status: "todo", name: nameText });
     localStorage.setItem(projectKey, JSON.stringify(tasks));
 
@@ -141,9 +142,10 @@ function renderTask(text, status, name) {
     task.classList.add("task");
     task.setAttribute("draggable", "true");
     task.setAttribute("data-name", name);
+    const color = getUserColor(name);
 
     task.innerHTML = `
-        <span>${text} - ${name}</span>
+        <span>${text} - <span style="color: ${color}">${name}</span></span>
         <i class="fas fa-trash delete-icon" onclick="deleteTask(this)"></i>
     `;
 
@@ -204,6 +206,33 @@ function removeNameFromFilter(name) {
             break;
         }
     }
+}
+
+function getUserColor(name) {
+    let colorsMap;
+
+    try {
+        colorsMap = JSON.parse(localStorage.getItem("userColors")) || {};
+    } catch {
+        colorsMap = {};
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(colorsMap, name)) {
+        const newColor = generateRandomColor();
+        colorsMap[name] = newColor;
+        localStorage.setItem("userColors", JSON.stringify(colorsMap));
+    }
+
+    return colorsMap[name];
+}
+
+function generateRandomColor() {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let index = 0; index < 6; index++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
 }
 
 function goBack() {
