@@ -207,13 +207,16 @@ function removeNameFromFilter(name) {
         }
     }
 }
+const usedColors = new Set();
 
-function getUserColor(name) {
+function getUserColor(name, hashOffset = 0) {
     let hash = 0;
 
     for (let i = 0; i < name.length; i++) {
         hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
+
+    hash += hashOffset;
 
     let color = '#';
     for (let i = 0; i < 3; i++) {
@@ -221,6 +224,11 @@ function getUserColor(name) {
         color += value.toString(16).padStart(2, '0');
     }
 
+    if (usedColors.has(color)) {
+        return getUserColor(name, hashOffset + 1);
+    }
+
+    usedColors.add(color);
     return color;
 }
 
