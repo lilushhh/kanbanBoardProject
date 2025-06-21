@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+
+# VS Code settings
+.vscode/
+
+# System files
+.DS_Store
+
+# Archives
+*.zip

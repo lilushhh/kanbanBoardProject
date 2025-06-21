@@ -1,5 +1,5 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const projectName = localStorage.getItem("currentProject");
+document.addEventListener("DOMContentLoaded", async() => {
+    const projectName = await fetch("http://localhost:8000/current-project").then(res => res.json()).then(data => data.name);
     if (projectName) {
         const title = document.getElementById("boardTitle");
         title.textContent = `${projectName} - Kanban Board`;
@@ -7,11 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("boardTitle").textContent = "Untitled Project - Kanban Board";
     }
 
-    const projectKey = "tasks_" + projectName;
-    const tasks = JSON.parse(localStorage.getItem(projectKey) || "[]");
+    const url = `http://localhost:8000/projects/${projectName}/tasks`;
 
-    tasks.forEach(task => renderTask(task.text, task.status, task.name));
-    filterByName();
+    await loadTasks();
 
     document.getElementById("filterOptions").addEventListener("change", filterTaskByUser);
 
@@ -22,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
         });
 
-        zone.addEventListener("drop", (e) => {
+        zone.addEventListener("drop", async(e) => {
             e.preventDefault();
 
             const text = e.dataTransfer.getData("text/plain");
@@ -32,34 +30,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const oldColumn = document.querySelector(`#${oldStatus} .tasks`);
             const taskToMove = [...oldColumn.children].find(el => {
-                const span = el.querySelector("span");
-                return span && span.textContent === `${text} - ${nameTask}`;
+                el.getAttribute("data-text") === text &&
+                    el.getAttribute("data-name") === nameTask
             });
 
             if (taskToMove) {
                 zone.appendChild(taskToMove);
             }
 
-            const projectKey = "tasks_" + localStorage.getItem("currentProject");
-            let tasks = JSON.parse(localStorage.getItem(projectKey) || "[]");
-
-            tasks = tasks.map(task =>
-                `${task.text} - ${task.name}` === `${text} - ${nameTask}` ? {...task, status: newStatus } :
-                task
-            );
-
-            localStorage.setItem(projectKey, JSON.stringify(tasks));
-            updateTaskCounts();
+            await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    text,
+                    name,
+                    status: newStatus
+                })
+            });
+            await loadTasks();
         });
     });
 });
 
-function filterTaskByUser() {
+async function loadTasks() {
+    const projectName = await fetch("http://localhost:8000/current-project").then(res => res.json()).then(data => data.name);
+    const url = `http://localhost:8000/projects/${projectName}/tasks`;
+    const tasks = await fetch(url).then(res => res.json());
+
+    const allColumns = document.querySelectorAll(".tasks");
+    allColumns.forEach(col => col.innerHTML = "");
+
+    tasks.forEach(task => renderTask(task.text, task.status, task.name));
+    await filterByName();
+    updateTaskCounts();
+}
+
+async function filterTaskByUser() {
     const selectedUser = document.getElementById("filterOptions").value;
 
-    const projectName = localStorage.getItem("currentProject");
-    const projectKey = "tasks_" + projectName;
-    const tasks = JSON.parse(localStorage.getItem(projectKey) || []);
+    const projectName = await fetch("http://localhost:8000/current-project").then(res => res.json()).then(data => data.name);
+    const url = `http://localhost:8000/projects/${projectName}/tasks`;
+    const tasks = await fetch(url).then(res => res.json());
 
     document.querySelectorAll(".tasks").forEach(zone => {
         zone.innerHTML = "";
@@ -73,7 +86,7 @@ function filterTaskByUser() {
     updateTaskCounts();
 }
 
-function filterByName() {
+async function filterByName() {
     const select = document.getElementById("filterOptions");
 
     select.innerHTML = "";
@@ -83,8 +96,10 @@ function filterByName() {
     allOption.textContent = "All";
     select.appendChild(allOption);
 
-    const projectKey = "tasks_" + localStorage.getItem("currentProject");
-    let tasks = JSON.parse(localStorage.getItem(projectKey) || "[]");
+    const projectName = await fetch("http://localhost:8000/current-project").then(res => res.json()).then(data => data.name);
+    const url = `http://localhost:8000/projects/${projectName}/tasks`;
+
+    const tasks = await fetch(url).then(res => res.json());
 
     let names = [...new Set(tasks.map(task => task.name))];
 
@@ -113,34 +128,41 @@ function addName() {
     return name;
 }
 
-function addTask() {
+async function addTask() {
     const input = document.getElementById("taskInput");
     const taskText = input.value.trim();
     const nameText = addName();
     if (!taskText) return;
 
-    const projectName = localStorage.getItem("currentProject");
-    const projectKey = "tasks_" + projectName;
-
-    let raw = localStorage.getItem(projectKey);
-    let tasks = raw ? JSON.parse(raw) : [];
-
+    const projectName = await fetch("http://localhost:8000/current-project").then(res => res.json()).then(data => data.name);
     getUserColor(nameText);
 
-    tasks.push({ text: taskText, status: "todo", name: nameText });
-    localStorage.setItem(projectKey, JSON.stringify(tasks));
-
-    renderTask(taskText, "todo", nameText);
-
-    filterByName();
-
-    input.value = "";
+    const url = `http://localhost:8000/projects/${projectName}/tasks`;
+    const res = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            text: taskText,
+            name: nameText,
+            status: "todo"
+        })
+    });
+    if (res.ok) {
+        renderTask(taskText, "todo", nameText);
+        await filterByName();
+        input.value = "";
+    } else {
+        console.error("failed to add task");
+    }
 }
 
 function renderTask(text, status, name) {
     const task = document.createElement("div");
     task.classList.add("task");
     task.setAttribute("draggable", "true");
+    task.setAttribute("data-text", text);
     task.setAttribute("data-name", name);
     const color = getUserColor(name);
 
@@ -179,22 +201,20 @@ function updateTaskCounts() {
     document.getElementById("doneTitle").textContent = `DONE (${doneCount})`;
 }
 
-function deleteTask(icon) {
+async function deleteTask(icon) {
     const task = icon.parentElement;
-    const taskText = task.querySelector("span").textContent;
+    const taskText = task.getAttribute("data-text");
     const name = task.getAttribute("data-name");
     removeNameFromFilter(name);
 
-    task.remove();
+    const projectName = await fetch("http://localhost:8000/current-project").then(res => res.json()).then(data => data.name);
 
-    const projectName = localStorage.getItem("currentProject");
-    const projectKey = "tasks_" + projectName;
-
-    let tasks = JSON.parse(localStorage.getItem(projectKey) || []);
-    tasks = tasks.filter(task => `${task.text} - ${task.name}` !== taskText);
-
-    localStorage.setItem(projectKey, JSON.stringify(tasks));
-
+    const res = await fetch(`http://localhost:8000/projects/${projectName}/tasks/${taskText}`, {
+        method: "DELETE"
+    });
+    if (res.ok) {
+        task.remove();
+    }
     updateTaskCounts();
 }
 
